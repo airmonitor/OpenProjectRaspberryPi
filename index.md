@@ -38,7 +38,7 @@ Or help me fix the last few kinks in the protocol. Any hints & suggestions are a
 
 * to be populated as discovered
 
-### How to install Openproject on Raspian
+### How to install Openproject on Ubuntu server
 
 This protocol is based on the outdated manual installation protocol that can be found [here](https://docs.openproject.org/installation-and-operations/installation/manual/). By now it has several issues, but it does spend more time explaining the various steps. 
 
@@ -59,7 +59,13 @@ Update the system and install necessary system packages, PostgreSQL and the opti
 ```
 sudo apt-get update -y
 sudo apt-get full-upgrade -y
-sudo apt-get install -y zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libgdbm-dev libncurses5-dev automake libtool bison libffi-dev git curl poppler-utils unrtf tesseract-ocr catdoc libxml2 libxml2-dev libxslt1-dev memcached postgresql postgresql-contrib libpq-dev libsass1 libsass-dev sassc npm nodejs
+sudo apt-get install -y zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libgdbm-dev libncurses5-dev automake libtool bison libffi-dev git curl poppler-utils unrtf tesseract-ocr catdoc libxml2 libxml2-dev libxslt1-dev memcached postgresql postgresql-contrib libpq-dev libsass1 libsass-dev sassc npm nodejs ruby ruby-dev
+```
+
+## Enable memcached to start at boot
+
+```
+systemctl enable memcached
 ```
 
 ## Expand filesystem
@@ -166,11 +172,11 @@ Careful - the manual installation I linked to above still uses stable/9, the cur
 
 ```
 cd ~
-git clone https://github.com/opf/openproject.git --branch stable/11--depth 1
+git clone https://github.com/opf/openproject.git --branch stable/11 --depth 1
 cd openproject
-gem update --system 
-gem install bundler
-bundle install --deployment --without mysql2 sqlite development test therubyracer docker 
+sudo gem update --system 
+sudo gem install bundler
+sudo bundle install --deployment --without mysql2 sqlite development test therubyracer docker 
 npm install
 npm audit fix
 ```
@@ -257,14 +263,14 @@ Install passenger for 'ruby', when asked.
 
 In  /etc/apache2/mods-available/passenger.load:
 ```
-LoadModule passenger_module /home/openproject/.rbenv/versions/2.6.3/lib/ruby/gems/2.6.0/gems/passenger-6.0.4/buildout/apache2/mod_passenger.so
+LoadModule passenger_module /var/lib/gems/2.7.0/gems/passenger-6.0.9/buildout/apache2/mod_passenger.so
 ```
 
 In /etc/apache2/mods-available/passenger.conf:
 ```
 <IfModule mod_passenger.c>
-     PassengerRoot /home/openproject/.rbenv/versions/2.6.3/lib/ruby/gems/2.6.0/gems/passenger-6.0.4
-     PassengerDefaultRuby /home/openproject/.rbenv/versions/2.6.3/bin/ruby
+  PassengerRoot /var/lib/gems/2.7.0/gems/passenger-6.0.9
+  PassengerDefaultRuby /usr/bin/ruby2.7
 </IfModule>
 
 ```
@@ -308,6 +314,13 @@ Edit the /etc/apache2/apache2.conf file:
         Allow from all
 </Directory>
 ```
+
+Enable openproject configuration for apache2:
+
+```
+ln -sf /etc/apache2/sites-available/openproject.conf /etc/apache2/sites-enabled/openproject.conf
+```
+
 
 This might create some security risks, but is required as long as the openproject folder lives in /home/openproject instead of the /var/www/ folders. 
 
